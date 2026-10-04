@@ -401,7 +401,7 @@
       closeMenu();
     }
     
-async function guardarOdontograma() {
+  async function guardarOdontograma() {
   const btn = document.querySelector('.btn-save');
   btn.innerText = 'Subiendo imagen y guardando...';
   btn.disabled = true;
@@ -409,24 +409,19 @@ async function guardarOdontograma() {
   try {
     closeMenu();
 
-    // 1. Capturar el área visual del odontograma
-    const elementsToCapture = document.querySelectorAll('.arch-section');
-    const container = document.createElement('div');
-    container.style.padding = '20px';
-    container.style.backgroundColor = '#ffffff';
-    container.style.display = 'inline-block';
-    
-    elementsToCapture.forEach(el => container.appendChild(el.cloneNode(true)));
-    document.body.appendChild(container);
-
-    const canvas = await html2canvas(container, { backgroundColor: '#ffffff', scale: 2 });
-    document.body.removeChild(container);
+    // 1. Capturar directamente el contenedor visible en pantalla
+    const captureArea = document.querySelector('.arch-section').parentElement;
+    const canvas = await html2canvas(captureArea, { 
+      backgroundColor: '#ffffff', 
+      scale: 2,
+      useCORS: true 
+    });
 
     // Extraer base64 sin encabezado
     const base64Data = canvas.toDataURL('image/png').split(',')[1];
 
-    // 2. SUBIR DIRECTAMENTE A IMGBB DESDE EL NAVEGADOR (SIN TOCAR GOOGLE DRIVE)
-    const IMGBB_API_KEY = '0536c271a1b613aa23da8d6a468db5e9'; // <-- PEGA TU CLAVE DE IMGBB AQUÍ
+    // 2. Subir directamente a ImgBB desde el navegador
+    const IMGBB_API_KEY = '0536c271a1b613aa23da8d6a468db5e9'; // <-- REEMPLAZA CON TU CLAVE DE IMGBB
 
     const formData = new FormData();
     formData.append('image', base64Data);
@@ -442,7 +437,7 @@ async function guardarOdontograma() {
       throw new Error('Error al subir imagen a servidor externo: ' + (imgbbResult.error ? imgbbResult.error.message : 'Error desconocido'));
     }
 
-    const imageUrl = imgbbResult.data.display_url; // Enlace directo https://i.ibb.co/....png
+    const imageUrl = imgbbResult.data.display_url;
 
     // 3. Recopilar los datos JSON de los dientes
     const data = [];
@@ -490,7 +485,7 @@ async function guardarOdontograma() {
     btn.disabled = false;
   }
 }
-
+    
     // 2. CARGA AUTOMÁTICA ROBUSTA AL ABRIR LA PÁGINA
     window.addEventListener('DOMContentLoaded', () => {
       if (!idPaciente) return;
