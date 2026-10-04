@@ -1,4 +1,4 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -198,7 +198,7 @@
     let activeTarget = null; 
     let activeToothNumber = null;
 
-    // Historial de cambios para Ctrl + Z (Soporta múltiples niveles de deshacer)
+    // Historial de cambios para Ctrl + Z
     let historyStack = [];
 
     function saveStateToHistory() {
@@ -210,10 +210,9 @@
         currentState.push({ tooth: tNum, state: state, polygons: polys });
       });
       historyStack.push(currentState);
-      if (historyStack.length > 50) historyStack.shift(); // Límite de 50 estados
+      if (historyStack.length > 50) historyStack.shift();
     }
 
-    // Escuchar combinación de teclas Ctrl + Z
     window.addEventListener('keydown', function(e) {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
         e.preventDefault();
@@ -360,7 +359,6 @@
     function applyToTarget(option) {
       if (!activeTarget) return;
 
-      // Guardar el estado actual en el historial antes de aplicar el cambio
       saveStateToHistory();
 
       const opcionesDeCara = ['sano_cara', 'caries', 'restauracion_resina', 'restauracion_amalgama', 'sellante', 'fractura', 'desgaste'];
@@ -399,25 +397,26 @@
       closeMenu();
     }
 
+    // 1. FUNCIÓN DE GUARDADO CORREGIDA (HACE EL FETCH REAL)
     function guardarOdontograma() {
       const data = [];
       document.querySelectorAll('.tooth svg').forEach(svg => {
         const tNum = svg.getAttribute('data-tooth');
         const state = svg.getAttribute('data-state');
         
-        const polys = svg.querySelectorAll('polygon');
         const getCleanClass = (poly) => {
+          if (!poly) return 'sano';
           let cls = poly.className.baseVal;
           let match = cls.match(/caries|restauracion_resina|restauracion_amalgama|sellante|fractura|desgaste/);
           return match ? match[0] : 'sano';
         };
 
         const zones = {
-          superior: getCleanClass(polys[0]),
-          izquierda: getCleanClass(polys[1]),
-          derecha: getCleanClass(polys[2]),
-          inferior: getCleanClass(polys[3]),
-          centro: getCleanClass(polys[4])
+          superior: getCleanClass(svg.querySelector('.zona-sup')),
+          izquierda: getCleanClass(svg.querySelector('.zona-izq')),
+          derecha: getCleanClass(svg.querySelector('.zona-der')),
+          inferior: getCleanClass(svg.querySelector('.zona-inf')),
+          centro: getCleanClass(svg.querySelector('.zona-centro'))
         };
 
         data.push({ tooth: tNum, global_state: state, zones: zones });
@@ -425,22 +424,22 @@
 
       const scriptURL = 'https://script.google.com/macros/s/AKfycbxs_u-wZP0GG-AVuZXjMS8KgnFvhvd570Akt3TV8zkq-S6RtaW0eJ_NHLaGG9nrrIMDmA/exec';
 
-      if (scriptURL === 'https://script.google.com/macros/s/AKfycbxs_u-wZP0GG-AVuZXjMS8KgnFvhvd570Akt3TV8zkq-S6RtaW0eJ_NHLaGG9nrrIMDmA/exec') {
-        alert('Odontograma completado correctamente.');
-        console.log(JSON.stringify({ id: idPaciente, odontograma: data }, null, 2));
-        return;
-      }
-
       fetch(scriptURL, {
         method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ id: idPaciente, odontograma: data })
       })
       .then(res => res.json())
-      .then(response => alert('¡Odontograma guardado correctamente!'))
+      .then(response => {
+        alert('¡Odontograma guardado correctamente en la base de datos!');
+      })
       .catch(err => alert('Error al guardar: ' + err));
     }
-    // CARGAR DATOS AUTOMÁTICAMENTE AL ABRIR LA PÁGINA
+
+    // 2. FUNCIÓN DE CARGA AUTOMÁTICA CORREGIDA (LEE CLASES DE FORMA PRECISA)
     window.addEventListener('DOMContentLoaded', () => {
+      if (!idPaciente) return;
+
       const scriptURL = 'https://script.google.com/macros/s/AKfycbxs_u-wZP0GG-AVuZXjMS8KgnFvhvd570Akt3TV8zkq-S6RtaW0eJ_NHLaGG9nrrIMDmA/exec';
 
       fetch(`${scriptURL}?id=${encodeURIComponent(idPaciente)}`)
@@ -455,13 +454,20 @@
                 svg.setAttribute('data-state', item.global_state);
               }
               if (item.zones) {
-                const polys = svg.querySelectorAll('polygon');
-                const zoneKeys = ['superior', 'izquierda', 'derecha', 'inferior', 'centro'];
-                zoneKeys.forEach((zk, idx) => {
-                  if (polys[idx] && item.zones[zk] && item.zones[zk] !== 'sano') {
-                    polys[idx].classList.add(item.zones[zk]);
+                const zoneMap = {
+                  superior: '.zona-sup',
+                  izquierda: '.zona-izq',
+                  derecha: '.zona-der',
+                  inferior: '.zona-inf',
+                  centro: '.zona-centro'
+                };
+
+                for (const [zoneKey, selector] of Object.entries(zoneMap)) {
+                  const poly = svg.querySelector(selector);
+                  if (poly && item.zones[zoneKey] && item.zones[zoneKey] !== 'sano') {
+                    poly.classList.add(item.zones[zoneKey]);
                   }
-                });
+                }
               }
             }
           });
