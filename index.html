@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Odontograma Interactivo Avanzado</title>
+  
+  <!-- Librería para capturar el odontograma como imagen PNG -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
   <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background-color: #f8f9fa; padding: 15px; margin: 0; color: #333; }
     h2 { color: #2c3e50; margin-bottom: 5px; }
@@ -189,6 +193,7 @@
       <div class="menu-item" onclick="applyToTarget('intrusion')"><span class="color-dot" style="background:#e84393;"></span> Intruido</div>
     </div>
   </div>
+
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const idPaciente = urlParams.get('id') || 'PRUEBA 001';
@@ -396,43 +401,76 @@
       closeMenu();
     }
 
-    // 1. GUARDAR ODONTOGRAMA
-    function guardarOdontograma() {
-      const data = [];
-      document.querySelectorAll('.tooth svg').forEach(svg => {
-        const tNum = svg.getAttribute('data-tooth');
-        const state = svg.getAttribute('data-state');
+    // 1. GUARDAR ODONTOGRAMA CON CAPTURA VISUAL DE IMAGEN
+    async function guardarOdontograma() {
+      const btn = document.querySelector('.btn-save');
+      btn.innerText = 'Guardando e incluyendo imagen...';
+      btn.disabled = true;
+
+      try {
+        // Aseguramos que el menú flotante esté cerrado antes de tomar la foto
+        closeMenu();
+
+        // Captura del área visual de los dientes
+        const elementsToCapture = document.querySelectorAll('.arch-section');
+        const container = document.createElement('div');
+        container.style.padding = '20px';
+        container.style.backgroundColor = '#ffffff';
+        container.style.display = 'inline-block';
         
-        const getCleanClass = (poly) => {
-          if (!poly) return 'sano';
-          let cls = poly.className.baseVal;
-          let match = cls.match(/caries|restauracion_resina|restauracion_amalgama|sellante|fractura|desgaste/);
-          return match ? match[0] : 'sano';
-        };
+        elementsToCapture.forEach(el => container.appendChild(el.cloneNode(true)));
+        document.body.appendChild(container);
 
-        const zones = {
-          superior: getCleanClass(svg.querySelector('.zona-sup')),
-          izquierda: getCleanClass(svg.querySelector('.zona-izq')),
-          derecha: getCleanClass(svg.querySelector('.zona-der')),
-          inferior: getCleanClass(svg.querySelector('.zona-inf')),
-          centro: getCleanClass(svg.querySelector('.zona-centro'))
-        };
+        const canvas = await html2canvas(container, { backgroundColor: '#ffffff', scale: 2 });
+        document.body.removeChild(container);
 
-        data.push({ tooth: tNum, global_state: state, zones: zones });
-      });
+        const imageBase64 = canvas.toDataURL('image/png');
 
-      const scriptURL = 'https://script.google.com/macros/s/AKfycbzoBXb3AIrSSCMK8S7stmlNVsyuNMedjGAjZ36cv3P2Ei5NCQexcu3QTpy-brmdcqg8Ag/exec';
+        // Recopilar datos JSON de los dientes
+        const data = [];
+        document.querySelectorAll('.tooth svg').forEach(svg => {
+          const tNum = svg.getAttribute('data-tooth');
+          const state = svg.getAttribute('data-state');
+          
+          const getCleanClass = (poly) => {
+            if (!poly) return 'sano';
+            let cls = poly.className.baseVal;
+            let match = cls.match(/caries|restauracion_resina|restauracion_amalgama|sellante|fractura|desgaste/);
+            return match ? match[0] : 'sano';
+          };
 
-      fetch(scriptURL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ id: idPaciente, odontograma: data })
-      })
-      .then(res => res.json())
-      .then(response => {
-        alert('¡Odontograma guardado correctamente en la base de datos!');
-      })
-      .catch(err => alert('Error al guardar: ' + err));
+          const zones = {
+            superior: getCleanClass(svg.querySelector('.zona-sup')),
+            izquierda: getCleanClass(svg.querySelector('.zona-izq')),
+            derecha: getCleanClass(svg.querySelector('.zona-der')),
+            inferior: getCleanClass(svg.querySelector('.zona-inf')),
+            centro: getCleanClass(svg.querySelector('.zona-centro'))
+          };
+
+          data.push({ tooth: tNum, global_state: state, zones: zones });
+        });
+
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbzoBXb3AIrSSCMK8S7stmlNVsyuNMedjGAjZ36cv3P2Ei5NCQexcu3QTpy-brmdcqg8Ag/exec';
+
+        // Petición POST con datos JSON e imagen Base64
+        const response = await fetch(scriptURL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            id: idPaciente,
+            odontograma: data,
+            imagen: imageBase64
+          })
+        });
+
+        const resData = await response.json();
+        alert('¡Odontograma e imagen guardados correctamente!');
+      } catch (err) {
+        alert('Error al guardar: ' + err);
+      } finally {
+        btn.innerText = 'Guardar Odontograma';
+        btn.disabled = false;
+      }
     }
 
     // 2. CARGA AUTOMÁTICA ROBUSTA AL ABRIR LA PÁGINA
@@ -444,7 +482,6 @@
       fetch(`${scriptURL}?id=${encodeURIComponent(idPaciente)}&t=${new Date().getTime()}`)
         .then(res => res.json())
         .then(savedData => {
-          // Si los datos vienen en formato String JSON, los parseamos a Array
           if (typeof savedData === 'string') {
             try { savedData = JSON.parse(savedData); } catch(e) {}
           }
@@ -469,7 +506,6 @@
                 for (const [zoneKey, selector] of Object.entries(zoneMap)) {
                   const poly = svg.querySelector(selector);
                   if (poly) {
-                    // Limpieza previa de clases
                     poly.className.baseVal = poly.className.baseVal.replace(/caries|restauracion_resina|restauracion_amalgama|sellante|fractura|desgaste/g, '').trim();
                     if (item.zones[zoneKey] && item.zones[zoneKey] !== 'sano') {
                       poly.classList.add(item.zones[zoneKey]);
