@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Odontograma Interactivo Avanzado</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background-color: #f8f9fa; padding: 15px; margin: 0; color: #333; }
+    h2 { color: #2c3e50; margin-bottom: 5px; }
+
+    .instructions { font-size: 13px; color: #7f8c8d; margin-bottom: 20px; }
+
+    /* Cuadrícula del Odontograma */
+    .arch-section { margin-bottom: 20px; }
+    .tooth-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; margin-bottom: 8px; }
+    .tooth-row.pediatric { gap: 6px; margin-top: -2px; }
+    
+    .tooth { width: 44px; text-align: center; position: relative; }
+    .tooth-number { font-size: 12px; font-weight: bold; margin-bottom: 2px; color: #34495e; }
+    .tooth-number.bottom { margin-bottom: 0; margin-top: 2px; }
+    
+    /* SVG Styles */
+    .tooth svg { width: 44px; height: 44px; cursor: pointer; background: #fff; border-radius: 4px; border: 1px solid #dcdde1; transition: all 0.2s; }
+    
+    /* Polígonos / Caras */
+    polygon { fill: #ffffff; stroke: #2c3e50; stroke-width: 1.2; transition: all 0.15s ease; }
+    
+    /* RESALTADO AL PASAR EL MOUSE (HOVER) */
+    polygon:hover { 
+      fill: #3498db !important; 
+      fill-opacity: 0.6 !important; 
+      stroke: #2980b9 !important; 
+      stroke-width: 2.2 !important; 
+    }
+    
+    /* RESALTADO CUANDO EL MENÚ ESTÁ ABIERTO EN ESTA CARA (ACTIVE) */
+    polygon.active-face { 
+      fill: #00cec9 !important; 
+      fill-opacity: 0.8 !important; 
+      stroke: #00b894 !important; 
+      stroke-width: 2.5 !important; 
+    }
+
+    /* Colores por Cara / Estado */
+    polygon.caries { fill: #e74c3c !important; }
+    polygon.restauracion_amalgama { fill: #2c3e50 !important; }
+    polygon.restauracion_resina { fill: #2980b9 !important; }
+    polygon.sellante { fill: #f1c40f !important; }
+    polygon.fractura { fill: #e67e22 !important; }
+    polygon.desgaste { fill: #95a5a6 !important; }
+    
+    /* Overlays globales (Diente Completo) */
+    .overlay { display: none; pointer-events: none; }
+    svg[data-state="exodoncia"] .overlay-exodoncia { display: block; }
+    svg[data-state="endodoncia"] .overlay-endodoncia { display: block; }
+    svg[data-state="corona_metal"] .overlay-corona-metal { display: block; }
+    svg[data-state="corona_estetica"] .overlay-corona-estetica { display: block; }
+    svg[data-state="implante"] .overlay-implante { display: block; }
+    svg[data-state="puente"] .overlay-puente { display: block; }
+    svg[data-state="ausente"] { opacity: 0.2; filter: grayscale(100%); }
+    svg[data-state="extrusion"] .overlay-extrusion { display: block; }
+    svg[data-state="intrusion"] .overlay-intrusion { display: block; }
+
+    /* MENÚ COMPACTO ADAPTABLE */
+    #context-menu {
+      display: none;
+      position: absolute;
+      z-index: 2000;
+      background: #ffffff;
+      border: 1px solid #b2bec3;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+      border-radius: 8px;
+      width: 290px;
+      text-align: left;
+      font-size: 12px;
+      overflow: hidden;
+    }
+    .menu-header {
+      background: #2c3e50;
+      color: white;
+      padding: 8px 12px;
+      font-weight: bold;
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .menu-section-title {
+      font-size: 10px;
+      font-weight: bold;
+      color: #57606f;
+      background: #f1f2f6;
+      padding: 4px 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-top: 1px solid #dfe4ea;
+      border-bottom: 1px solid #dfe4ea;
+    }
+
+    /* Grid de opciones en 2 columnas */
+    .menu-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      padding: 6px;
+      background: #ffffff;
+    }
+    .menu-item {
+      padding: 6px 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 4px;
+      border: 1px solid #f1f2f6;
+      background: #fafafa;
+      font-size: 11px;
+      font-weight: 500;
+      transition: all 0.1s;
+    }
+    .menu-item:hover {
+      background: #e3f2fd;
+      border-color: #74b9ff;
+      color: #0984e3;
+    }
+    .menu-item.full-width {
+      grid-column: span 2;
+    }
+    .color-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 1px solid rgba(0,0,0,0.2);
+    }
+
+    /* Botón Guardar */
+    .btn-save { padding: 12px 35px; background: #27ae60; color: white; border: none; font-size: 15px; font-weight: bold; border-radius: 6px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 10px; }
+    .btn-save:hover { background: #219150; }
+  </style>
+</head>
+<body>
+
+  <h2>Odontograma Interactivo</h2>
+  <div class="instructions">Haz clic en cualquier cara del diente para diagnosticar (Usa <strong>Ctrl + Z</strong> para deshacer cambios). ID: <strong id="patient-id" style="color:#2980b9;">--</strong></div>
+
+  <!-- Estructura de Arcadas -->
+  <div class="arch-section">
+    <div class="tooth-row" id="adult-top"></div>
+    <div class="tooth-row pediatric" id="ped-top"></div>
+  </div>
+
+  <div class="arch-section">
+    <div class="tooth-row pediatric" id="ped-bottom"></div>
+    <div class="tooth-row" id="adult-bottom"></div>
+  </div>
+
+  <button class="btn-save" onclick="guardarOdontograma()">Guardar Odontograma</button>
+
+  <!-- MENÚ COMPACTO DE OPCIONES -->
+  <div id="context-menu">
+    <div class="menu-header">
+      <span id="menu-title">Diente --</span>
+      <span style="cursor:pointer; font-size:14px; opacity:0.8;" onclick="closeMenu()">✕</span>
+    </div>
+    
+    <div class="menu-section-title">Afección por Cara</div>
+    <div class="menu-grid">
+      <div class="menu-item full-width" onclick="applyToTarget('sano_cara')"><span class="color-dot" style="background:#fff;"></span> Limpiar Cara (Sana)</div>
+      <div class="menu-item" onclick="applyToTarget('caries')"><span class="color-dot" style="background:#e74c3c;"></span> Caries</div>
+      <div class="menu-item" onclick="applyToTarget('restauracion_resina')"><span class="color-dot" style="background:#2980b9;"></span> Resina</div>
+      <div class="menu-item" onclick="applyToTarget('restauracion_amalgama')"><span class="color-dot" style="background:#2c3e50;"></span> Amalgama</div>
+      <div class="menu-item" onclick="applyToTarget('sellante')"><span class="color-dot" style="background:#f1c40f;"></span> Sellante</div>
+      <div class="menu-item" onclick="applyToTarget('fractura')"><span class="color-dot" style="background:#e67e22;"></span> Fractura</div>
+      <div class="menu-item" onclick="applyToTarget('desgaste')"><span class="color-dot" style="background:#95a5a6;"></span> Desgaste</div>
+    </div>
+
+    <div class="menu-section-title">Tratamiento Global</div>
+    <div class="menu-grid">
+      <div class="menu-item full-width" onclick="applyToTarget('sano_total')"><span class="color-dot" style="background:#ecf0f1;"></span> Restaurar Diente Completo</div>
+      <div class="menu-item" onclick="applyToTarget('exodoncia')"><span class="color-dot" style="background:#c0392b;"></span> Exodoncia</div>
+      <div class="menu-item" onclick="applyToTarget('endodoncia')"><span class="color-dot" style="background:#3498db;"></span> Endodoncia</div>
+      <div class="menu-item" onclick="applyToTarget('corona_estetica')"><span class="color-dot" style="background:#8e44ad;"></span> C. Estética</div>
+      <div class="menu-item" onclick="applyToTarget('corona_metal')"><span class="color-dot" style="background:#718093;"></span> C. Metal</div>
+      <div class="menu-item" onclick="applyToTarget('implante')"><span class="color-dot" style="background:#16a085;"></span> Implante</div>
+      <div class="menu-item" onclick="applyToTarget('ausente')"><span class="color-dot" style="background:#b2bec3;"></span> Ausente</div>
+      <div class="menu-item" onclick="applyToTarget('puente')"><span class="color-dot" style="background:#d63031;"></span> Pilar Puente</div>
+      <div class="menu-item" onclick="applyToTarget('extrusion')"><span class="color-dot" style="background:#fdcb6e;"></span> Extruido</div>
+      <div class="menu-item" onclick="applyToTarget('intrusion')"><span class="color-dot" style="background:#e84393;"></span> Intruido</div>
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const idPaciente = urlParams.get('id') || 'PRUEBA 001';
+    document.getElementById('patient-id').innerText = idPaciente;
+
+    let activeTarget = null; 
+    let activeToothNumber = null;
+
+    // Historial de cambios para Ctrl + Z (Soporta múltiples niveles de deshacer)
+    let historyStack = [];
+
+    function saveStateToHistory() {
+      const currentState = [];
+      document.querySelectorAll('.tooth svg').forEach(svg => {
+        const tNum = svg.getAttribute('data-tooth');
+        const state = svg.getAttribute('data-state');
+        const polys = Array.from(svg.querySelectorAll('polygon')).map(p => p.className.baseVal);
+        currentState.push({ tooth: tNum, state: state, polygons: polys });
+      });
+      historyStack.push(currentState);
+      if (historyStack.length > 50) historyStack.shift(); // Límite de 50 estados
+    }
+
+    // Escuchar combinación de teclas Ctrl + Z
+    window.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        undoLastAction();
+      }
+    });
+
+    function undoLastAction() {
+      if (historyStack.length === 0) return;
+      const previousState = historyStack.pop();
+      
+      previousState.forEach(item => {
+        const svg = document.querySelector(`.tooth svg[data-tooth="${item.tooth}"]`);
+        if (svg) {
+          svg.setAttribute('data-state', item.state);
+          const polys = svg.querySelectorAll('polygon');
+          item.polygons.forEach((cls, idx) => {
+            if (polys[idx]) {
+              polys[idx].className.baseVal = cls;
+            }
+          });
+        }
+      });
+      closeMenu();
+    }
+
+    function getFaceName(number, zoneKey) {
+      const num = parseInt(number);
+      const isUpper = (num >= 11 && num <= 28) || (num >= 51 && num <= 65);
+      
+      switch(zoneKey) {
+        case 'sup': return 'Vestibular';
+        case 'inf': return isUpper ? 'Palatino' : 'Lingual';
+        case 'centro': return (num % 10 <= 3) ? 'Incisal' : 'Oclusal';
+        case 'izq': return ([1,2,5,6].includes(Math.floor(num/10))) ? 'Mesial' : 'Distal';
+        case 'der': return ([1,2,5,6].includes(Math.floor(num/10))) ? 'Distal' : 'Mesial';
+        default: return 'Cara';
+      }
+    }
+
+    function renderTooth(number, isBottom = false) {
+      const numberHtml = `<div class="tooth-number ${isBottom ? 'bottom' : ''}">${number}</div>`;
+      
+      const svgHtml = `
+        <svg viewBox="0 0 100 100" data-tooth="${number}" data-state="sano">
+          <rect x="0" y="0" width="100" height="100" fill="#ffffff" onclick="openMenu(event, this.parentElement, '${number}', null)"/>
+          <polygon points="0,0 100,0 75,25 25,25" class="zona-sup" onclick="openMenu(event, this, '${number}', 'sup')"/>
+          <polygon points="0,0 25,25 25,75 0,100" class="zona-izq" onclick="openMenu(event, this, '${number}', 'izq')"/>
+          <polygon points="100,0 75,25 75,75 100,100" class="zona-der" onclick="openMenu(event, this, '${number}', 'der')"/>
+          <polygon points="0,100 25,75 75,75 100,100" class="zona-inf" onclick="openMenu(event, this, '${number}', 'inf')"/>
+          <polygon points="25,25 75,25 75,75 25,75" class="zona-centro" onclick="openMenu(event, this, '${number}', 'centro')"/>
+
+          <g class="overlay overlay-exodoncia">
+            <line x1="5" y1="5" x2="95" y2="95" stroke="#c0392b" stroke-width="10"/>
+            <line x1="95" y1="5" x2="5" y2="95" stroke="#c0392b" stroke-width="10"/>
+          </g>
+          <g class="overlay overlay-endodoncia">
+            <line x1="50" y1="5" x2="50" y2="95" stroke="#3498db" stroke-width="12"/>
+          </g>
+          <g class="overlay overlay-corona-estetica">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="#8e44ad" stroke-width="8"/>
+          </g>
+          <g class="overlay overlay-corona-metal">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="#718093" stroke-width="8"/>
+          </g>
+          <g class="overlay overlay-implante">
+            <text x="50" y="58" font-size="24" text-anchor="middle" font-weight="bold" fill="#16a085">IMP</text>
+          </g>
+          <g class="overlay overlay-puente">
+            <rect x="10" y="10" width="80" height="80" fill="none" stroke="#d63031" stroke-width="6" stroke-dasharray="6,4"/>
+          </g>
+          <g class="overlay overlay-extrusion">
+            <polygon points="50,15 35,35 65,35" fill="#fdcb6e"/>
+          </g>
+          <g class="overlay overlay-intrusion">
+            <polygon points="50,85 35,65 65,65" fill="#e84393"/>
+          </g>
+        </svg>
+      `;
+
+      return `<div class="tooth">
+                ${!isBottom ? numberHtml : ''}
+                ${svgHtml}
+                ${isBottom ? numberHtml : ''}
+              </div>`;
+    }
+
+    const adultTop = [18,17,16,15,14,13,12,11, 21,22,23,24,25,26,27,28];
+    const pedTop = [55,54,53,52,51, 61,62,63,64,65];
+    const pedBottom = [85,84,83,82,81, 71,72,73,74,75];
+    const adultBottom = [48,47,46,45,44,43,42,41, 31,32,33,34,35,36,37,38];
+
+    document.getElementById('adult-top').innerHTML = adultTop.map(t => renderTooth(t, false)).join('');
+    document.getElementById('ped-top').innerHTML = pedTop.map(t => renderTooth(t, false)).join('');
+    document.getElementById('ped-bottom').innerHTML = pedBottom.map(t => renderTooth(t, true)).join('');
+    document.getElementById('adult-bottom').innerHTML = adultBottom.map(t => renderTooth(t, true)).join('');
+
+    function openMenu(event, targetElement, toothNum, zoneKey) {
+      event.stopPropagation();
+      document.querySelectorAll('polygon.active-face').forEach(p => p.classList.remove('active-face'));
+
+      activeTarget = targetElement;
+      activeToothNumber = toothNum;
+
+      if (targetElement && targetElement.tagName === 'polygon') {
+        targetElement.classList.add('active-face');
+      }
+
+      const menu = document.getElementById('context-menu');
+      
+      if (zoneKey) {
+        const faceText = getFaceName(toothNum, zoneKey);
+        document.getElementById('menu-title').innerText = `Diente ${toothNum} (${faceText})`;
+      } else {
+        document.getElementById('menu-title').innerText = `Diente ${toothNum}`;
+      }
+
+      menu.style.display = 'block';
+
+      const menuWidth = 290;
+      const menuHeight = menu.offsetHeight || 330;
+      
+      let posX = event.clientX + 10;
+      let posY = event.clientY + 10;
+
+      if (posX + menuWidth > window.innerWidth - 10) posX = event.clientX - menuWidth - 10;
+      if (posY + menuHeight > window.innerHeight - 10) posY = window.innerHeight - menuHeight - 15;
+      if (posX < 10) posX = 10;
+      if (posY < 10) posY = 10;
+
+      menu.style.left = (posX + window.scrollX) + 'px';
+      menu.style.top = (posY + window.scrollY) + 'px';
+    }
+
+    window.onclick = function() {
+      closeMenu();
+    }
+
+    function closeMenu() {
+      document.getElementById('context-menu').style.display = 'none';
+      document.querySelectorAll('polygon.active-face').forEach(p => p.classList.remove('active-face'));
+    }
+
+    function applyToTarget(option) {
+      if (!activeTarget) return;
+
+      // Guardar el estado actual en el historial antes de aplicar el cambio
+      saveStateToHistory();
+
+      const opcionesDeCara = ['sano_cara', 'caries', 'restauracion_resina', 'restauracion_amalgama', 'sellante', 'fractura', 'desgaste'];
+      
+      if (opcionesDeCara.includes(option)) {
+        let polygon = null;
+        if (activeTarget.tagName === 'polygon') {
+          polygon = activeTarget;
+        } else {
+          const svg = activeTarget.closest('svg');
+          polygon = svg.querySelector('.zona-centro');
+        }
+
+        if (polygon) {
+          polygon.className.baseVal = polygon.className.baseVal.replace(/caries|restauracion_resina|restauracion_amalgama|sellante|fractura|desgaste/g, '').trim();
+          if (option !== 'sano_cara') {
+            polygon.classList.add(option);
+          }
+        }
+      } else {
+        let svg = activeTarget.tagName === 'SVG' ? activeTarget : activeTarget.closest('svg');
+        
+        if (option === 'sano_total') {
+          svg.setAttribute('data-state', 'sano');
+          svg.querySelectorAll('polygon').forEach(p => {
+            p.className.baseVal = p.className.baseVal.replace(/caries|restauracion_resina|restauracion_amalgama|sellante|fractura|desgaste/g, '').trim();
+          });
+        } else {
+          if (svg.getAttribute('data-state') === option) {
+             svg.setAttribute('data-state', 'sano');
+          } else {
+             svg.setAttribute('data-state', option);
+          }
+        }
+      }
+      closeMenu();
+    }
+
+    function guardarOdontograma() {
+      const data = [];
+      document.querySelectorAll('.tooth svg').forEach(svg => {
+        const tNum = svg.getAttribute('data-tooth');
+        const state = svg.getAttribute('data-state');
+        
+        const polys = svg.querySelectorAll('polygon');
+        const getCleanClass = (poly) => {
+          let cls = poly.className.baseVal;
+          let match = cls.match(/caries|restauracion_resina|restauracion_amalgama|sellante|fractura|desgaste/);
+          return match ? match[0] : 'sano';
+        };
+
+        const zones = {
+          superior: getCleanClass(polys[0]),
+          izquierda: getCleanClass(polys[1]),
+          derecha: getCleanClass(polys[2]),
+          inferior: getCleanClass(polys[3]),
+          centro: getCleanClass(polys[4])
+        };
+
+        data.push({ tooth: tNum, global_state: state, zones: zones });
+      });
+
+      const scriptURL = 'TU_WEB_APP_URL_AQUI';
+
+      if (scriptURL === 'TU_WEB_APP_URL_AQUI') {
+        alert('Odontograma completado correctamente.');
+        console.log(JSON.stringify({ id: idPaciente, odontograma: data }, null, 2));
+        return;
+      }
+
+      fetch(scriptURL, {
+        method: 'POST',
+        body: JSON.stringify({ id: idPaciente, odontograma: data })
+      })
+      .then(res => res.json())
+      .then(response => alert('¡Odontograma guardado correctamente!'))
+      .catch(err => alert('Error al guardar: ' + err));
+    }
+  </script>
+</body>
+</html>
