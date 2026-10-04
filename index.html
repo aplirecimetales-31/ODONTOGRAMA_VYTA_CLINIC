@@ -13,15 +13,30 @@
     h2 { color: #2c3e50; margin-bottom: 5px; }
 
     .instructions { font-size: 13px; color: #7f8c8d; margin-bottom: 20px; }
-
-    /* Cuadrícula del Odontograma */
-    .arch-section { margin-bottom: 20px; }
-    .tooth-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; margin-bottom: 8px; }
-    .tooth-row.pediatric { gap: 6px; margin-top: -2px; }
     
-    .tooth { width: 44px; text-align: center; position: relative; }
-    .tooth-number { font-size: 12px; font-weight: bold; margin-bottom: 2px; color: #34495e; }
+    /* Cuadrícula del Odontograma */
+    .arch-section { 
+      margin-bottom: 20px; 
+      width: 100%;
+      overflow-x: auto; /* Permite deslizar horizontalmente en celulares pequeños sin romper diseño */
+      padding-bottom: 5px;
+    }
+    .tooth-row { 
+      display: flex; 
+      flex-wrap: nowrap; /* Evita que los dientes bajen a la siguiente línea */
+      justify-content: center; 
+      gap: 3px; 
+      margin-bottom: 8px; 
+      min-width: max-content; /* Asegura que mantengan su línea horizontal completa */
+    }
+    .tooth-row.pediatric { gap: 4px; margin-top: -2px; }
+    
+    .tooth { width: 38px; text-align: center; position: relative; flex-shrink: 0; }
+    .tooth-number { font-size: 11px; font-weight: bold; margin-bottom: 2px; color: #34495e; }
     .tooth-number.bottom { margin-bottom: 0; margin-top: 2px; }
+    
+    /* SVG Styles */
+    .tooth svg { width: 38px; height: 38px; cursor: pointer; background: #fff; border-radius: 4px; border: 1px solid #dcdde1; transition: all 0.2s; }
     
     /* SVG Styles */
     .tooth svg { width: 44px; height: 44px; cursor: pointer; background: #fff; border-radius: 4px; border: 1px solid #dcdde1; transition: all 0.2s; }
@@ -489,7 +504,11 @@
     });
 
     const resData = await response.json();
-    alert('Respuesta de Google Sheets: ' + JSON.stringify(resData));
+    if (resData.status === 'success') {
+  alert('¡Odontograma e imagen guardados correctamente!');
+} else {
+  alert('Error al guardar en Google Sheets: ' + (resData.message || 'Error desconocido'));
+      }
   } catch (err) {
     alert('Error al guardar: ' + err.message);
   } finally {
