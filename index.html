@@ -489,7 +489,7 @@
     });
 
     const resData = await response.json();
-    alert('¡Odontograma e imagen guardados correctamente!');
+    alert('Respuesta de Google Sheets: ' + JSON.stringify(resData));
   } catch (err) {
     alert('Error al guardar: ' + err.message);
   } finally {
