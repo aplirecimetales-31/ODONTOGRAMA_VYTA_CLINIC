@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -423,9 +423,9 @@
         data.push({ tooth: tNum, global_state: state, zones: zones });
       });
 
-      const scriptURL = 'TU_WEB_APP_URL_AQUI';
+      const scriptURL = 'https://script.google.com/macros/s/AKfycbxs_u-wZP0GG-AVuZXjMS8KgnFvhvd570Akt3TV8zkq-S6RtaW0eJ_NHLaGG9nrrIMDmA/exec';
 
-      if (scriptURL === 'TU_WEB_APP_URL_AQUI') {
+      if (scriptURL === 'https://script.google.com/macros/s/AKfycbxs_u-wZP0GG-AVuZXjMS8KgnFvhvd570Akt3TV8zkq-S6RtaW0eJ_NHLaGG9nrrIMDmA/exec') {
         alert('Odontograma completado correctamente.');
         console.log(JSON.stringify({ id: idPaciente, odontograma: data }, null, 2));
         return;
@@ -439,6 +439,35 @@
       .then(response => alert('¡Odontograma guardado correctamente!'))
       .catch(err => alert('Error al guardar: ' + err));
     }
+    // CARGAR DATOS AUTOMÁTICAMENTE AL ABRIR LA PÁGINA
+    window.addEventListener('DOMContentLoaded', () => {
+      const scriptURL = 'https://script.google.com/macros/s/AKfycbxs_u-wZP0GG-AVuZXjMS8KgnFvhvd570Akt3TV8zkq-S6RtaW0eJ_NHLaGG9nrrIMDmA/exec';
+
+      fetch(`${scriptURL}?id=${encodeURIComponent(idPaciente)}`)
+        .then(res => res.json())
+        .then(savedData => {
+          if (!savedData || !Array.isArray(savedData) || savedData.length === 0) return;
+
+          savedData.forEach(item => {
+            const svg = document.querySelector(`.tooth svg[data-tooth="${item.tooth}"]`);
+            if (svg) {
+              if (item.global_state && item.global_state !== 'sano') {
+                svg.setAttribute('data-state', item.global_state);
+              }
+              if (item.zones) {
+                const polys = svg.querySelectorAll('polygon');
+                const zoneKeys = ['superior', 'izquierda', 'derecha', 'inferior', 'centro'];
+                zoneKeys.forEach((zk, idx) => {
+                  if (polys[idx] && item.zones[zk] && item.zones[zk] !== 'sano') {
+                    polys[idx].classList.add(item.zones[zk]);
+                  }
+                });
+              }
+            }
+          });
+        })
+        .catch(err => console.error('Error al cargar datos previos:', err));
+    });
   </script>
 </body>
 </html>
