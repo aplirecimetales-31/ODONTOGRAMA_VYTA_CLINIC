@@ -442,7 +442,7 @@
 
       const scriptURL = 'https://script.google.com/macros/s/AKfycbzoBXb3AIrSSCMK8S7stmlNVsyuNMedjGAjZ36cv3P2Ei5NCQexcu3QTpy-brmdcqg8Ag/exec';
 
-      fetch(`${scriptURL}?id=${encodeURIComponent(idPaciente)}`)
+      fetch(`${scriptURL}?id=${encodeURIComponent(idPaciente)}&t=${new Date().getTime()}`)
         .then(res => res.json())
         .then(savedData => {
           if (!savedData || !Array.isArray(savedData) || savedData.length === 0) return;
