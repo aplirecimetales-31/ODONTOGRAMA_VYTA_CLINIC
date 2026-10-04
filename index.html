@@ -450,7 +450,7 @@
           data.push({ tooth: tNum, global_state: state, zones: zones });
         });
 
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbzoBXb3AIrSSCMK8S7stmlNVsyuNMedjGAjZ36cv3P2Ei5NCQexcu3QTpy-brmdcqg8Ag/exec';
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbyIt420t9QL8wCbEOCCyEm2507KhG9l5rm4OgaXxGzVpmShcIg04jLbrEA6_PDb6Ioagg/exec';
 
         // Petición POST con datos JSON e imagen Base64
         const response = await fetch(scriptURL, {
@@ -477,7 +477,7 @@
     window.addEventListener('DOMContentLoaded', () => {
       if (!idPaciente) return;
 
-      const scriptURL = 'https://script.google.com/macros/s/AKfycbzoBXb3AIrSSCMK8S7stmlNVsyuNMedjGAjZ36cv3P2Ei5NCQexcu3QTpy-brmdcqg8Ag/exec';
+      const scriptURL = 'https://script.google.com/macros/s/AKfycbyIt420t9QL8wCbEOCCyEm2507KhG9l5rm4OgaXxGzVpmShcIg04jLbrEA6_PDb6Ioagg/exec';
 
       fetch(`${scriptURL}?id=${encodeURIComponent(idPaciente)}&t=${new Date().getTime()}`)
         .then(res => res.json())
