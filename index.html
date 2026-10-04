@@ -189,7 +189,6 @@
       <div class="menu-item" onclick="applyToTarget('intrusion')"><span class="color-dot" style="background:#e84393;"></span> Intruido</div>
     </div>
   </div>
-
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const idPaciente = urlParams.get('id') || 'PRUEBA 001';
@@ -317,7 +316,7 @@
       activeTarget = targetElement;
       activeToothNumber = toothNum;
 
-      if (targetElement && targetElement.tagName === 'polygon') {
+      if (targetElement && targetElement.tagName.toLowerCase() === 'polygon') {
         targetElement.classList.add('active-face');
       }
 
@@ -365,7 +364,7 @@
       
       if (opcionesDeCara.includes(option)) {
         let polygon = null;
-        if (activeTarget.tagName === 'polygon') {
+        if (activeTarget.tagName.toLowerCase() === 'polygon') {
           polygon = activeTarget;
         } else {
           const svg = activeTarget.closest('svg');
@@ -379,7 +378,7 @@
           }
         }
       } else {
-        let svg = activeTarget.tagName === 'SVG' ? activeTarget : activeTarget.closest('svg');
+        let svg = activeTarget.closest('svg');
         
         if (option === 'sano_total') {
           svg.setAttribute('data-state', 'sano');
@@ -397,7 +396,7 @@
       closeMenu();
     }
 
-    // 1. FUNCIÓN DE GUARDADO CORREGIDA (HACE EL FETCH REAL)
+    // 1. GUARDAR ODONTOGRAMA
     function guardarOdontograma() {
       const data = [];
       document.querySelectorAll('.tooth svg').forEach(svg => {
@@ -436,7 +435,7 @@
       .catch(err => alert('Error al guardar: ' + err));
     }
 
-    // 2. FUNCIÓN DE CARGA AUTOMÁTICA CORREGIDA (LEE CLASES DE FORMA PRECISA)
+    // 2. CARGA AUTOMÁTICA ROBUSTA AL ABRIR LA PÁGINA
     window.addEventListener('DOMContentLoaded', () => {
       if (!idPaciente) return;
 
@@ -445,6 +444,11 @@
       fetch(`${scriptURL}?id=${encodeURIComponent(idPaciente)}&t=${new Date().getTime()}`)
         .then(res => res.json())
         .then(savedData => {
+          // Si los datos vienen en formato String JSON, los parseamos a Array
+          if (typeof savedData === 'string') {
+            try { savedData = JSON.parse(savedData); } catch(e) {}
+          }
+
           if (!savedData || !Array.isArray(savedData) || savedData.length === 0) return;
 
           savedData.forEach(item => {
@@ -464,8 +468,12 @@
 
                 for (const [zoneKey, selector] of Object.entries(zoneMap)) {
                   const poly = svg.querySelector(selector);
-                  if (poly && item.zones[zoneKey] && item.zones[zoneKey] !== 'sano') {
-                    poly.classList.add(item.zones[zoneKey]);
+                  if (poly) {
+                    // Limpieza previa de clases
+                    poly.className.baseVal = poly.className.baseVal.replace(/caries|restauracion_resina|restauracion_amalgama|sellante|fractura|desgaste/g, '').trim();
+                    if (item.zones[zoneKey] && item.zones[zoneKey] !== 'sano') {
+                      poly.classList.add(item.zones[zoneKey]);
+                    }
                   }
                 }
               }
