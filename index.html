@@ -400,78 +400,96 @@
       }
       closeMenu();
     }
+    
+async function guardarOdontograma() {
+  const btn = document.querySelector('.btn-save');
+  btn.innerText = 'Subiendo imagen y guardando...';
+  btn.disabled = true;
 
-    // 1. GUARDAR ODONTOGRAMA CON CAPTURA VISUAL DE IMAGEN
-    async function guardarOdontograma() {
-      const btn = document.querySelector('.btn-save');
-      btn.innerText = 'Guardando e incluyendo imagen...';
-      btn.disabled = true;
+  try {
+    closeMenu();
 
-      try {
-        // Aseguramos que el menú flotante esté cerrado antes de tomar la foto
-        closeMenu();
+    // 1. Capturar el área visual del odontograma
+    const elementsToCapture = document.querySelectorAll('.arch-section');
+    const container = document.createElement('div');
+    container.style.padding = '20px';
+    container.style.backgroundColor = '#ffffff';
+    container.style.display = 'inline-block';
+    
+    elementsToCapture.forEach(el => container.appendChild(el.cloneNode(true)));
+    document.body.appendChild(container);
 
-        // Captura del área visual de los dientes
-        const elementsToCapture = document.querySelectorAll('.arch-section');
-        const container = document.createElement('div');
-        container.style.padding = '20px';
-        container.style.backgroundColor = '#ffffff';
-        container.style.display = 'inline-block';
-        
-        elementsToCapture.forEach(el => container.appendChild(el.cloneNode(true)));
-        document.body.appendChild(container);
+    const canvas = await html2canvas(container, { backgroundColor: '#ffffff', scale: 2 });
+    document.body.removeChild(container);
 
-        const canvas = await html2canvas(container, { backgroundColor: '#ffffff', scale: 2 });
-        document.body.removeChild(container);
+    // Extraer base64 sin encabezado
+    const base64Data = canvas.toDataURL('image/png').split(',')[1];
 
-        const imageBase64 = canvas.toDataURL('image/png');
+    // 2. SUBIR DIRECTAMENTE A IMGBB DESDE EL NAVEGADOR (SIN TOCAR GOOGLE DRIVE)
+    const IMGBB_API_KEY = '0536c271a1b613aa23da8d6a468db5e9'; // <-- PEGA TU CLAVE DE IMGBB AQUÍ
 
-        // Recopilar datos JSON de los dientes
-        const data = [];
-        document.querySelectorAll('.tooth svg').forEach(svg => {
-          const tNum = svg.getAttribute('data-tooth');
-          const state = svg.getAttribute('data-state');
-          
-          const getCleanClass = (poly) => {
-            if (!poly) return 'sano';
-            let cls = poly.className.baseVal;
-            let match = cls.match(/caries|restauracion_resina|restauracion_amalgama|sellante|fractura|desgaste/);
-            return match ? match[0] : 'sano';
-          };
+    const formData = new FormData();
+    formData.append('image', base64Data);
 
-          const zones = {
-            superior: getCleanClass(svg.querySelector('.zona-sup')),
-            izquierda: getCleanClass(svg.querySelector('.zona-izq')),
-            derecha: getCleanClass(svg.querySelector('.zona-der')),
-            inferior: getCleanClass(svg.querySelector('.zona-inf')),
-            centro: getCleanClass(svg.querySelector('.zona-centro'))
-          };
+    const imgbbResponse = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+      method: 'POST',
+      body: formData
+    });
 
-          data.push({ tooth: tNum, global_state: state, zones: zones });
-        });
+    const imgbbResult = await imgbbResponse.json();
 
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbyIt420t9QL8wCbEOCCyEm2507KhG9l5rm4OgaXxGzVpmShcIg04jLbrEA6_PDb6Ioagg/exec';
-
-        // Petición POST con datos JSON e imagen Base64
-        const response = await fetch(scriptURL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({
-            id: idPaciente,
-            odontograma: data,
-            imagen: imageBase64
-          })
-        });
-
-        const resData = await response.json();
-        alert('¡Odontograma e imagen guardados correctamente!');
-      } catch (err) {
-        alert('Error al guardar: ' + err);
-      } finally {
-        btn.innerText = 'Guardar Odontograma';
-        btn.disabled = false;
-      }
+    if (!imgbbResult.success) {
+      throw new Error('Error al subir imagen a servidor externo: ' + (imgbbResult.error ? imgbbResult.error.message : 'Error desconocido'));
     }
+
+    const imageUrl = imgbbResult.data.display_url; // Enlace directo https://i.ibb.co/....png
+
+    // 3. Recopilar los datos JSON de los dientes
+    const data = [];
+    document.querySelectorAll('.tooth svg').forEach(svg => {
+      const tNum = svg.getAttribute('data-tooth');
+      const state = svg.getAttribute('data-state');
+      
+      const getCleanClass = (poly) => {
+        if (!poly) return 'sano';
+        let cls = poly.className.baseVal;
+        let match = cls.match(/caries|restauracion_resina|restauracion_amalgama|sellante|fractura|desgaste/);
+        return match ? match[0] : 'sano';
+      };
+
+      const zones = {
+        superior: getCleanClass(svg.querySelector('.zona-sup')),
+        izquierda: getCleanClass(svg.querySelector('.zona-izq')),
+        derecha: getCleanClass(svg.querySelector('.zona-der')),
+        inferior: getCleanClass(svg.querySelector('.zona-inf')),
+        centro: getCleanClass(svg.querySelector('.zona-centro'))
+      };
+
+      data.push({ tooth: tNum, global_state: state, zones: zones });
+    });
+
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbzoBXb3AIrSSCMK8S7stmlNVsyuNMedjGAjZ36cv3P2Ei5NCQexcu3QTpy-brmdcqg8Ag/exec';
+
+    // 4. Enviar JSON y la URL pública de la imagen a Google Apps Script
+    const response = await fetch(scriptURL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        id: idPaciente,
+        odontograma: data,
+        imagenUrl: imageUrl
+      })
+    });
+
+    const resData = await response.json();
+    alert('¡Odontograma e imagen guardados correctamente!');
+  } catch (err) {
+    alert('Error al guardar: ' + err.message);
+  } finally {
+    btn.innerText = 'Guardar Odontograma';
+    btn.disabled = false;
+  }
+}
 
     // 2. CARGA AUTOMÁTICA ROBUSTA AL ABRIR LA PÁGINA
     window.addEventListener('DOMContentLoaded', () => {
