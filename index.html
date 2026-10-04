@@ -400,8 +400,7 @@
       }
       closeMenu();
     }
-    
-  async function guardarOdontograma() {
+ async function guardarOdontograma() {
   const btn = document.querySelector('.btn-save');
   btn.innerText = 'Subiendo imagen y guardando...';
   btn.disabled = true;
@@ -409,19 +408,32 @@
   try {
     closeMenu();
 
-    // 1. Capturar directamente el contenedor visible en pantalla
-    const captureArea = document.querySelector('.arch-section').parentElement;
-    const canvas = await html2canvas(captureArea, { 
+    // 1. Crear un contenedor temporal que agrupe TODAS las arcadas visibles para capturarlas juntas
+    const container = document.createElement('div');
+    container.style.padding = '15px';
+    container.style.backgroundColor = '#ffffff';
+    container.style.display = 'inline-block';
+    
+    // Clonar ambas secciones de arcadas
+    document.querySelectorAll('.arch-section').forEach(section => {
+      container.appendChild(section.cloneNode(true));
+    });
+    
+    document.body.appendChild(container);
+
+    const canvas = await html2canvas(container, { 
       backgroundColor: '#ffffff', 
       scale: 2,
       useCORS: true 
     });
 
+    document.body.removeChild(container);
+
     // Extraer base64 sin encabezado
     const base64Data = canvas.toDataURL('image/png').split(',')[1];
 
     // 2. Subir directamente a ImgBB desde el navegador
-    const IMGBB_API_KEY = '0536c271a1b613aa23da8d6a468db5e9'; // <-- REEMPLAZA CON TU CLAVE DE IMGBB
+    const IMGBB_API_KEY = '0536c271a1b613aa23da8d6a468db5e9';
 
     const formData = new FormData();
     formData.append('image', base64Data);
