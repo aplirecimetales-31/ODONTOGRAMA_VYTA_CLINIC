@@ -422,7 +422,7 @@
         data.push({ tooth: tNum, global_state: state, zones: zones });
       });
 
-      const scriptURL = 'https://script.google.com/macros/s/AKfycbxs_u-wZP0GG-AVuZXjMS8KgnFvhvd570Akt3TV8zkq-S6RtaW0eJ_NHLaGG9nrrIMDmA/exec';
+      const scriptURL = 'https://script.google.com/macros/s/AKfycbzoBXb3AIrSSCMK8S7stmlNVsyuNMedjGAjZ36cv3P2Ei5NCQexcu3QTpy-brmdcqg8Ag/exec';
 
       fetch(scriptURL, {
         method: 'POST',
@@ -440,7 +440,7 @@
     window.addEventListener('DOMContentLoaded', () => {
       if (!idPaciente) return;
 
-      const scriptURL = 'https://script.google.com/macros/s/AKfycbxs_u-wZP0GG-AVuZXjMS8KgnFvhvd570Akt3TV8zkq-S6RtaW0eJ_NHLaGG9nrrIMDmA/exec';
+      const scriptURL = 'https://script.google.com/macros/s/AKfycbzoBXb3AIrSSCMK8S7stmlNVsyuNMedjGAjZ36cv3P2Ei5NCQexcu3QTpy-brmdcqg8Ag/exec';
 
       fetch(`${scriptURL}?id=${encodeURIComponent(idPaciente)}`)
         .then(res => res.json())
