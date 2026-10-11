@@ -1,0 +1,317 @@
+/* --- Google Fonts para Tipografía Médica y Moderna --- */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+/* --- Variables de Tema Clínico Minimalista (Fondo Claro) --- */
+:root {
+  --bg-color: #f8fafc;
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --primary-blue: #0284c7;
+  --primary-teal: #0d9488;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --tooth-bg: #ffffff;
+  --shadow-subtle: 0 10px 25px -5px rgba(15, 23, 42, 0.05), 0 8px 10px -6px rgba(15, 23, 42, 0.03);
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  text-align: center;
+  background-color: var(--bg-color);
+  /* Marca de agua / Fondo con textura discreta clínica */
+  background-image: 
+    radial-gradient(#cbd5e1 0.8px, transparent 0.8px),
+    radial-gradient(#cbd5e1 0.8px, var(--bg-color) 0.8px);
+  background-size: 32px 32px;
+  background-position: 0 0, 16px 16px;
+  padding: 35px 15px;
+  margin: 0;
+  color: var(--text-main);
+  min-height: 100vh;
+}
+
+/* --- Título Principal con Logotipo Oficial VYTA CLINIC --- */
+h2 {
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #0f172a;
+  margin-top: 10px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* Carga del logotipo de VYTA CLINIC al lado del título */
+h2::before {
+  content: '';
+  display: inline-block;
+  width: 36px;
+  height: 36px;
+  background-image: url('logo\ vyta\ prueba.svg'); /* Nombre de la imagen del logo en tu carpeta */
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+/* --- Barra de Instrucciones tipo Flotante --- */
+.instructions {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 28px;
+  background: var(--card-bg);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: 30px;
+  border: 1px solid var(--card-border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.instructions strong {
+  color: var(--primary-blue);
+}
+
+#patient-id {
+  color: var(--primary-teal) !important;
+  font-weight: 700;
+  background: #f0fdf4;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid #bbf7d0;
+}
+
+/* --- Contenedores / Tarjetas del Odontograma --- */
+.arch-section {
+  margin-bottom: 24px;
+  width: 100%;
+  max-width: 980px;
+  margin-left: auto;
+  margin-right: auto;
+  overflow-x: auto;
+  padding: 24px 18px;
+  background: var(--card-bg);
+  border-radius: 18px;
+  border: 1px solid var(--card-border);
+  box-shadow: var(--shadow-subtle);
+  transition: all 0.25s ease;
+}
+
+.arch-section:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 15px 30px -10px rgba(15, 23, 42, 0.08);
+}
+
+.tooth-row {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  min-width: max-content;
+}
+
+.tooth-row.pediatric {
+  gap: 10px;
+  margin-top: -2px;
+  background: #f1f5f9;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px dashed #cbd5e1;
+}
+
+/* --- Dientes & Números --- */
+.tooth {
+  width: 50px;
+  text-align: center;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.tooth-number {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #475569;
+  letter-spacing: 0.3px;
+}
+
+.tooth-number.bottom {
+  margin-bottom: 0;
+  margin-top: 6px;
+}
+
+/* --- SVG Estilizado e Interactivo --- */
+.tooth svg {
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+  background: var(--tooth-bg);
+  border-radius: 10px;
+  border: 1.5px solid #cbd5e1;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+}
+
+.tooth svg:hover {
+  transform: translateY(-3px) scale(1.04);
+  border-color: var(--primary-blue);
+  box-shadow: 0 8px 16px rgba(2, 132, 199, 0.15);
+}
+
+polygon {
+  fill: #ffffff;
+  stroke: #64748b;
+  stroke-width: 1.2;
+  transition: all 0.15s ease;
+}
+
+polygon:hover {
+  fill: #38bdf8 !important;
+  fill-opacity: 0.5 !important;
+  stroke: #0284c7 !important;
+  stroke-width: 2 !important;
+}
+
+polygon.active-face {
+  fill: #2dd4bf !important;
+  fill-opacity: 0.85 !important;
+  stroke: #0d9488 !important;
+  stroke-width: 2.2 !important;
+}
+
+/* --- Colores de Patologías / Estados --- */
+polygon.caries { fill: #ef4444 !important; stroke: #dc2626 !important; }
+polygon.restauracion_amalgama { fill: #475569 !important; stroke: #1e293b !important; }
+polygon.restauracion_resina { fill: #3b82f6 !important; stroke: #2563eb !important; }
+polygon.sellante { fill: #f59e0b !important; stroke: #d97706 !important; }
+polygon.fractura { fill: #f97316 !important; stroke: #ea580c !important; }
+polygon.desgaste { fill: #94a3b8 !important; stroke: #64748b !important; }
+
+/* --- Overlays --- */
+.overlay { display: none; pointer-events: none; }
+svg[data-state="exodoncia"] .overlay-exodoncia { display: block; }
+svg[data-state="endodoncia"] .overlay-endodoncia { display: block; }
+svg[data-state="corona_metal"] .overlay-corona-metal { display: block; }
+svg[data-state="corona_estetica"] .overlay-corona-estetica { display: block; }
+svg[data-state="implante"] .overlay-implante { display: block; }
+svg[data-state="puente"] .overlay-puente { display: block; }
+svg[data-state="ausente"] { opacity: 0.25; filter: grayscale(100%); }
+svg[data-state="extrusion"] .overlay-extrusion { display: block; }
+svg[data-state="intrusion"] .overlay-intrusion { display: block; }
+
+/* --- Menú Contextual / Modal de Opciones --- */
+#context-menu {
+  display: none;
+  position: absolute;
+  z-index: 2000;
+  background: #ffffff;
+  border: 1px solid var(--card-border);
+  box-shadow: 0 20px 30px -10px rgba(15, 23, 42, 0.15);
+  border-radius: 14px;
+  width: 310px;
+  text-align: left;
+  font-size: 12px;
+  overflow: hidden;
+}
+
+.menu-header {
+  background: #0f172a;
+  color: #f8fafc;
+  padding: 12px 16px;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.menu-section-title {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--primary-blue);
+  background: #f8fafc;
+  padding: 6px 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  border-top: 1px solid var(--card-border);
+  border-bottom: 1px solid var(--card-border);
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 10px;
+  background: #ffffff;
+}
+
+.menu-item {
+  padding: 8px 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 8px;
+  border: 1px solid #f1f5f9;
+  background: #f8fafc;
+  font-size: 11px;
+  font-weight: 600;
+  color: #334155;
+  transition: all 0.15s ease;
+}
+
+.menu-item:hover {
+  background: #e0f2fe;
+  border-color: #38bdf8;
+  color: #0369a1;
+  transform: translateY(-1px);
+}
+
+.menu-item.full-width {
+  grid-column: span 2;
+}
+
+.color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+/* --- Botón Guardar Odontograma --- */
+.btn-save {
+  padding: 16px 45px;
+  background: linear-gradient(135deg, #0d9488 0%, #059669 100%);
+  color: #ffffff;
+  border: none;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 10px 20px -5px rgba(13, 148, 136, 0.35);
+  margin-top: 15px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-save:hover {
+  background: linear-gradient(135deg, #0f766e 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px -5px rgba(13, 148, 136, 0.5);
+}
+
+.btn-save:active {
+  transform: translateY(0);
+}
