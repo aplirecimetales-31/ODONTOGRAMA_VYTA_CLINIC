@@ -290,7 +290,9 @@
 
     const canvas = await html2canvas(container, { 
       backgroundColor: '#ffffff', 
-      scale: 4,
+      width: 950,  // Ancho fijo en píxeles para la captura
+      height: 700, // Alto fijo en píxeles para la captura
+      scale: 3,
       useCORS: true 
     });
 
