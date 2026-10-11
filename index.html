@@ -1,169 +1,17 @@
-<!DOCTYPE html>
+DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Odontograma Interactivo Avanzado</title>
+  <title<!>Odontograma VYTA CLINIC</title>
   
   <!-- Librería para capturar el odontograma como imagen PNG -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-  <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background-color: #f8f9fa; padding: 15px; margin: 0; color: #333; }
-    h2 { color: #2c3e50; margin-bottom: 5px; }
-
-    .instructions { font-size: 13px; color: #7f8c8d; margin-bottom: 20px; }
-    
-    /* Cuadrícula del Odontograma con espacio y tamaño cómodo */
-    .arch-section { 
-      margin-bottom: 25px; 
-      width: 100%;
-      overflow-x: auto; /* Mantiene la barra deslizable lateral si la pantalla es muy pequeña */
-      padding-bottom: 8px;
-    }
-    .tooth-row { 
-      display: flex; 
-      flex-wrap: nowrap; 
-      justify-content: center; 
-      gap: 8px; /* Espacio generoso y separado entre dientes */
-      margin-bottom: 12px; 
-      min-width: max-content; 
-    }
-    .tooth-row.pediatric { gap: 10px; margin-top: -2px; }
-    
-    .tooth { width: 50px; text-align: center; position: relative; flex-shrink: 0; } /* Ancho cómodo */
-    .tooth-number { font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #34495e; }
-    .tooth-number.bottom { margin-bottom: 0; margin-top: 4px; }
-    
-    /* SVG Styles más grandes y fáciles de presionar */
-    .tooth svg { width: 50px; height: 50px; cursor: pointer; background: #fff; border-radius: 6px; border: 1.5px solid #dcdde1; transition: all 0.2s; }
-    
-    /* SVG Styles */
-    .tooth svg { width: 38px; height: 38px; cursor: pointer; background: #fff; border-radius: 4px; border: 1px solid #dcdde1; transition: all 0.2s; }
-    
-    /* SVG Styles */
-    .tooth svg { width: 44px; height: 44px; cursor: pointer; background: #fff; border-radius: 4px; border: 1px solid #dcdde1; transition: all 0.2s; }
-    
-    /* Polígonos / Caras */
-    polygon { fill: #ffffff; stroke: #2c3e50; stroke-width: 1.2; transition: all 0.15s ease; }
-    
-    /* RESALTADO AL PASAR EL MOUSE (HOVER) */
-    polygon:hover { 
-      fill: #3498db !important; 
-      fill-opacity: 0.6 !important; 
-      stroke: #2980b9 !important; 
-      stroke-width: 2.2 !important; 
-    }
-    
-    /* RESALTADO CUANDO EL MENÚ ESTÁ ABIERTO EN ESTA CARA (ACTIVE) */
-    polygon.active-face { 
-      fill: #00cec9 !important; 
-      fill-opacity: 0.8 !important; 
-      stroke: #00b894 !important; 
-      stroke-width: 2.5 !important; 
-    }
-
-    /* Colores por Cara / Estado */
-    polygon.caries { fill: #e74c3c !important; }
-    polygon.restauracion_amalgama { fill: #2c3e50 !important; }
-    polygon.restauracion_resina { fill: #2980b9 !important; }
-    polygon.sellante { fill: #f1c40f !important; }
-    polygon.fractura { fill: #e67e22 !important; }
-    polygon.desgaste { fill: #95a5a6 !important; }
-    
-    /* Overlays globales (Diente Completo) */
-    .overlay { display: none; pointer-events: none; }
-    svg[data-state="exodoncia"] .overlay-exodoncia { display: block; }
-    svg[data-state="endodoncia"] .overlay-endodoncia { display: block; }
-    svg[data-state="corona_metal"] .overlay-corona-metal { display: block; }
-    svg[data-state="corona_estetica"] .overlay-corona-estetica { display: block; }
-    svg[data-state="implante"] .overlay-implante { display: block; }
-    svg[data-state="puente"] .overlay-puente { display: block; }
-    svg[data-state="ausente"] { opacity: 0.2; filter: grayscale(100%); }
-    svg[data-state="extrusion"] .overlay-extrusion { display: block; }
-    svg[data-state="intrusion"] .overlay-intrusion { display: block; }
-
-    /* MENÚ COMPACTO ADAPTABLE */
-    #context-menu {
-      display: none;
-      position: absolute;
-      z-index: 2000;
-      background: #ffffff;
-      border: 1px solid #b2bec3;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.25);
-      border-radius: 8px;
-      width: 290px;
-      text-align: left;
-      font-size: 12px;
-      overflow: hidden;
-    }
-    .menu-header {
-      background: #2c3e50;
-      color: white;
-      padding: 8px 12px;
-      font-weight: bold;
-      font-size: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .menu-section-title {
-      font-size: 10px;
-      font-weight: bold;
-      color: #57606f;
-      background: #f1f2f6;
-      padding: 4px 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      border-top: 1px solid #dfe4ea;
-      border-bottom: 1px solid #dfe4ea;
-    }
-
-    /* Grid de opciones en 2 columnas */
-    .menu-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 4px;
-      padding: 6px;
-      background: #ffffff;
-    }
-    .menu-item {
-      padding: 6px 8px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      border-radius: 4px;
-      border: 1px solid #f1f2f6;
-      background: #fafafa;
-      font-size: 11px;
-      font-weight: 500;
-      transition: all 0.1s;
-    }
-    .menu-item:hover {
-      background: #e3f2fd;
-      border-color: #74b9ff;
-      color: #0984e3;
-    }
-    .menu-item.full-width {
-      grid-column: span 2;
-    }
-    .color-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      flex-shrink: 0;
-      border: 1px solid rgba(0,0,0,0.2);
-    }
-
-    /* Botón Guardar */
-    .btn-save { padding: 12px 35px; background: #27ae60; color: white; border: none; font-size: 15px; font-weight: bold; border-radius: 6px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 10px; }
-    .btn-save:hover { background: #219150; }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <h2>Odontograma Interactivo</h2>
+  <h2>Odontograma Interactivo VYTA</h2>
   <div class="instructions">Haz clic en cualquier cara del diente para diagnosticar (Usa <strong>Ctrl + Z</strong> para deshacer cambios). ID: <strong id="patient-id" style="color:#2980b9;">--</strong></div>
 
   <!-- Estructura de Arcadas -->
